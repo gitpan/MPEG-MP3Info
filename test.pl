@@ -7,10 +7,11 @@
 # Change 1..1 below to 1..last_test_to_print .
 # (It may become useful if the test is moved to ./t subdirectory.)
 
-BEGIN { $| = 1; print "1..31\n"; }
+BEGIN { $| = 1; print "1..87\n"; }
 END {print "not ok 1\n" unless $loaded;}
 use strict;
 use MPEG::MP3Info;
+use File::Copy;
 use vars qw/$loaded/;
 $loaded = 1;
 print "ok 1\n";
@@ -21,10 +22,31 @@ print "ok 1\n";
 # (correspondingly "not ok 13") depending on the success of chunk 13
 # of the test code):
 
-my($tf1, $tt1, $ti1, $tf2, $tt2, $ti2, $c);
+my($tf1, $tf2, $tf3, $tf4, $tt1, $tt2, $ti1, $ti2,
+    $ttd1, $ttd2, $tti1, $tti2, $c);
 $c = 1;
 $tf1 = 'test1.mp3';
 $tf2 = 'test2.mp3';
+$tf3 = 'test3.mp3';
+$tf4 = 'test4.mp3';
+
+@{$ttd1}{qw(ALBUM ARTIST GENRE COMMENT YEAR TITLE)} = (
+    '', 'Pudge', 'Sound Clip', 'Copyright, All Rights Reserved',
+    '1998', 'Test 1'
+);
+
+@{$ttd2}{qw(ALBUM ARTIST GENRE COMMENT YEAR TITLE)} = (
+    '', 'Pudge', 'Sound Clip', 'Copyright, All Rights Reserved',
+    '1998', 'Test 2'
+);
+
+@{$tti1}{qw(FREQUENCY STEREO BITRATE LAYER MM SS VERSION)} = (
+    qw(44.1 1 128 3 0 0 1)
+);
+
+@{$tti2}{qw(FREQUENCY STEREO BITRATE LAYER MM SS VERSION)} = (
+    qw(22.05 0 128 2 0 1 0)
+);
 
 # test 2
 test($tt1 = get_mp3tag ($tf1), ++$c);
@@ -33,42 +55,81 @@ test($ti1 = get_mp3info($tf1), ++$c);
 test($ti2 = get_mp3info($tf2), ++$c);
 
 #test 6
-test($tt1->{ALBUM}      eq '',                                  ++$c);
-test($tt1->{ARTIST}     eq 'Pudge',                             ++$c);
-test($tt1->{GENRE}      eq 'Sound Clip',                        ++$c);
-test($tt1->{COMMENT}    eq 'Copyright, All Rights Reserved',    ++$c);
-test($tt1->{YEAR}       eq '1998',                              ++$c);
-test($tt1->{TITLE}      eq 'Test 1',                            ++$c);
-
-# test 12
-test($tt2->{ALBUM}      eq '',                                  ++$c);
-test($tt2->{ARTIST}     eq 'Pudge',                             ++$c);
-test($tt2->{GENRE}      eq 'Sound Clip',                        ++$c);
-test($tt2->{COMMENT}    eq 'Copyright, All Rights Reserved',    ++$c);
-test($tt2->{YEAR}       eq '1998',                              ++$c);
-test($tt2->{TITLE}      eq 'Test 2',                            ++$c);
+for my $f (qw(ALBUM ARTIST GENRE COMMENT YEAR TITLE)) {
+    test_fields($tt1, $ttd1, $f);
+    test_fields($tt2, $ttd2, $f);
+}
 
 # test 18
-test($ti1->{FREQUENCY}  eq '44.1',                              ++$c);
-test($ti1->{STEREO}     eq '1',                                 ++$c);
-test($ti1->{BITRATE}    eq '128',                               ++$c);
-test($ti1->{LAYER}      eq '3',                                 ++$c);
-test($ti1->{MM}         eq '0',                                 ++$c);
-test($ti1->{SS}         eq '0',                                 ++$c);
-test($ti1->{VERSION}    eq '1',                                 ++$c);
+for my $f (qw(FREQUENCY STEREO BITRATE LAYER MM SS VERSION)) {
+    test_fields($ti1, $tti1, $f);
+    test_fields($ti2, $tti2, $f);
+}
 
-# test 25
-test($ti2->{FREQUENCY}  eq '22.05',                             ++$c);
-test($ti2->{STEREO}     eq '0',                                 ++$c);
-test($ti2->{BITRATE}    eq '128',                               ++$c);
-test($ti2->{LAYER}      eq '2',                                 ++$c);
-test($ti2->{MM}         eq '0',                                 ++$c);
-test($ti2->{SS}         eq '1',                                 ++$c);
-test($ti2->{VERSION}    eq '0',                                 ++$c);
+copy($tf1, $tf3) or die "Can't copy '$tf1' to '$tf3': $!";
+copy($tf2, $tf4) or die "Can't copy '$tf2' to '$tf4': $!";
 
-#use Data::Dumper;
-#print Dumper $tt1, $ti1, $tt2, $ti2;
+use_winamp_genres();
+
+my %th = (ALBUM=>'hrmmm', ARTIST=>'hummmm', GENRE=>'Power Ballad');
+while (my($k, $v) = each %th) {
+    $tt1->{$k} = $ttd1->{$k} = $tt2->{$k} = $ttd2->{$k} = $v;
+}
+
+# test 32
+test($tt1 = get_mp3tag ($tf3), ++$c);
+test($tt2 = get_mp3tag ($tf4), ++$c);
+test($ti1 = get_mp3info($tf3), ++$c);
+test($ti2 = get_mp3info($tf4), ++$c);
+
+# test 36
+for my $f (qw(ALBUM ARTIST GENRE)) {
+    test_fields($tt1, $ttd1, $f, 1);
+    test_fields($tt2, $ttd2, $f, 1);
+}
+
+# test 42
+for my $f (qw(FREQUENCY STEREO BITRATE LAYER MM SS VERSION)) {
+    test_fields($ti1, $tti1, $f);
+    test_fields($ti2, $tti2, $f);
+}
+
+# test 56
+test(set_mp3tag($tf3, $ttd1), ++$c);
+test(set_mp3tag($tf4, $ttd2), ++$c);
+
+test($tt1 = get_mp3tag ($tf3), ++$c);
+test($tt2 = get_mp3tag ($tf4), ++$c);
+test($ti1 = get_mp3info($tf3), ++$c);
+test($ti2 = get_mp3info($tf4), ++$c);
+
+# test 62
+for my $f (qw(ALBUM ARTIST GENRE COMMENT YEAR TITLE)) {
+    test_fields($tt1, $ttd1, $f);
+    test_fields($tt2, $ttd2, $f);
+}
+
+# test 74
+for my $f (qw(FREQUENCY STEREO BITRATE LAYER MM SS VERSION)) {
+    test_fields($ti1, $tti1, $f);
+    test_fields($ti2, $tti2, $f);
+}
+
+unlink($tf3) or warn "Can't unlink '$tf3': $!";
+unlink($tf4) or warn "Can't unlink '$tf4': $!";
 
 sub test {
     print (($_[0] ? '' : 'not '), "ok $_[1]\n");
+    return shift;
+}
+
+sub test_fields {
+    my($f1, $f2, $f, $not) = @_;
+    test(($not
+            ? ($f1->{$f} ne $f2->{$f})
+            : ($f1->{$f} eq $f2->{$f})), ++$c) ||
+        printf "# wanted%s: $$f1{$f} (%d), got: $$f2{$f} (%d)\n",
+            ($not ? ' not' : ''),
+            length($f1->{$f}), length($f2->{$f});
+
 }

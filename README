@@ -1,4 +1,25 @@
-Sunday, February 21, 1999
+Monday, March 1, 1999
+
+***WARNING***
+
+This module seems quite stable, and my tests (more extensive now)
+seem to work well, and the reports I've gotten are positive.
+There have been significant changes to the most important functions,
+which should improve performance and reliability.  These should
+make the module better, but may in some cases make it worse
+for your MP3 files.
+
+If you are having problems with an MP3 file and this module, please
+contact me directly.  I will likely ask you to put the MP3 file(s)
+in question in a place I can access them (HTTP or FTP), so I can test
+them directly (NOTE: this is not just a clever ploy to get you to
+send me MP3s :).
+
+I don't anticipate serious problems, and in fact I have not been able
+to find an MP3 file that the new module fails on.  But you have been
+warned.
+
+***WARNING***
 
 This archive can always be obtained from:
 
@@ -37,7 +58,7 @@ DESCRIPTION
     use_winamp_genres()
     Puts WinAmp genres into `@mp3_genres' and `%mp3_genres'.
 
-    Import the data structures with one of:
+    You can import the data structures with one of:
 
         use MPEG::MP3Info qw(:genres);
         use MPEG::MP3Info qw(:DEFAULT :genres);
@@ -51,10 +72,12 @@ DESCRIPTION
     set_mp3tag (FILE, TITLE, ARTIST, ALBUM, YEAR, COMMENT, GENRE)
     set_mp3tag (FILE, $HASHREF)
     Adds/changes tag information in an MP3 audio file. Will clobber any
-    existing information in file. All fields have a 30-byte limit, except
-    for YEAR, which has a four-byte limit.
+    existing information in file.
 
-    GENRE is a case-insensitive text string representing a genre found in
+    Fields are TITLE, ARTIST, ALBUM, YEAR, COMMENT, GENRE. All fields have
+    a 30-byte limit, except for YEAR, which has a four-byte limit, and
+    GENRE, which is one byte in the file. The GENRE passed in the function
+    is a case-insensitive text string representing a genre found in
     `@mp3_genres'.
 
     Will accept either a list of values, or a hashref of the type returned
@@ -62,12 +85,33 @@ DESCRIPTION
 
     get_mp3tag (FILE)
     Returns hash reference containing tag information in MP3 file. Same
-    info as described in `set_mp3tag'. You can't change this data.
+    info as described in `set_mp3tag'.
 
     get_mp3info (FILE)
-    Returns hash reference containing file information for MP3 file.
+    Returns hash reference containing file information for MP3 file. This
+    data cannot be changed.
+
+TODO
+    ID3v2 Support
+        Added recognition of ID3v2 headers, speeding up `get_mp3info' for
+        those files that have ID3v2 tags. Want to add functionality to get
+        and set data in those tags.
 
 HISTORY
+    v0.61, Monday, March 1, 1999
+        Fixed problem of not removing nulls on return from `get_mp3tag'
+        (was using spaces for padding before ... now trailing whitespace
+        and all nulls are removed before returning tag info).
+
+        Made tests more extensive (more for my own sanity when making all
+        these changes than to make sure it works on other platforms and
+        machines :).
+
+    v0.60, Sunday, February 28, 1999
+        Cleaned up a lot of stuff, added more comments, made `get_mp3info'
+        much faster and much more reliable, and added recognition of ID3v2
+        headers. Thanks to Tom Brown <thecap@usa.net> for his help.
+
     v0.52, Sunday, February 21, 1999
         Fixed problem in `get_mp3tag' that changed value of `$_' in caller
         (Todd Hanneken <thanneken@hds.harvard.edu>).
@@ -155,6 +199,6 @@ AUTHOR AND COPYRIGHT
     Helped me figure it all out.
 
 VERSION
-    v0.52, Sunday, February 21, 1999
+    v0.61, Monday, March 1, 1999
 
 #============================================================================
