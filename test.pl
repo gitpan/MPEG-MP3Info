@@ -7,7 +7,7 @@
 # Change 1..1 below to 1..last_test_to_print .
 # (It may become useful if the test is moved to ./t subdirectory.)
 
-BEGIN { $| = 1; print "1..87\n"; }
+BEGIN { $| = 1; print "1..91\n"; }
 END {print "not ok 1\n" unless $loaded;}
 use strict;
 use MPEG::MP3Info;
@@ -30,14 +30,14 @@ $tf2 = 'test2.mp3';
 $tf3 = 'test3.mp3';
 $tf4 = 'test4.mp3';
 
-@{$ttd1}{qw(ALBUM ARTIST GENRE COMMENT YEAR TITLE)} = (
-    '', 'Pudge', 'Sound Clip', 'Copyright, All Rights Reserved',
-    '1998', 'Test 1'
+@{$ttd1}{qw(ALBUM ARTIST GENRE COMMENT YEAR TITLE TRACKNUM)} = (
+    '', 'Pudge', 'Sound Clip', 'All Rights Reserved',
+    '1998', 'Test 1', 1
 );
 
-@{$ttd2}{qw(ALBUM ARTIST GENRE COMMENT YEAR TITLE)} = (
-    '', 'Pudge', 'Sound Clip', 'Copyright, All Rights Reserved',
-    '1998', 'Test 2'
+@{$ttd2}{qw(ALBUM ARTIST GENRE COMMENT YEAR TITLE TRACKNUM)} = (
+    '', 'Pudge', 'Sound Clip', 'All Rights Reserved',
+    '1998', 'Test 2', 2
 );
 
 @{$tti1}{qw(FREQUENCY STEREO BITRATE LAYER MM SS VERSION)} = (
@@ -55,12 +55,12 @@ test($ti1 = get_mp3info($tf1), ++$c);
 test($ti2 = get_mp3info($tf2), ++$c);
 
 #test 6
-for my $f (qw(ALBUM ARTIST GENRE COMMENT YEAR TITLE)) {
+for my $f (qw(ALBUM ARTIST GENRE COMMENT YEAR TITLE TRACKNUM)) {
     test_fields($tt1, $ttd1, $f);
     test_fields($tt2, $ttd2, $f);
 }
 
-# test 18
+# test 20
 for my $f (qw(FREQUENCY STEREO BITRATE LAYER MM SS VERSION)) {
     test_fields($ti1, $tti1, $f);
     test_fields($ti2, $tti2, $f);
@@ -76,25 +76,25 @@ while (my($k, $v) = each %th) {
     $tt1->{$k} = $ttd1->{$k} = $tt2->{$k} = $ttd2->{$k} = $v;
 }
 
-# test 32
+# test 34
 test($tt1 = get_mp3tag ($tf3), ++$c);
 test($tt2 = get_mp3tag ($tf4), ++$c);
 test($ti1 = get_mp3info($tf3), ++$c);
 test($ti2 = get_mp3info($tf4), ++$c);
 
-# test 36
+# test 38
 for my $f (qw(ALBUM ARTIST GENRE)) {
     test_fields($tt1, $ttd1, $f, 1);
     test_fields($tt2, $ttd2, $f, 1);
 }
 
-# test 42
+# test 44
 for my $f (qw(FREQUENCY STEREO BITRATE LAYER MM SS VERSION)) {
     test_fields($ti1, $tti1, $f);
     test_fields($ti2, $tti2, $f);
 }
 
-# test 56
+# test 58
 test(set_mp3tag($tf3, $ttd1), ++$c);
 test(set_mp3tag($tf4, $ttd2), ++$c);
 
@@ -103,17 +103,19 @@ test($tt2 = get_mp3tag ($tf4), ++$c);
 test($ti1 = get_mp3info($tf3), ++$c);
 test($ti2 = get_mp3info($tf4), ++$c);
 
-# test 62
-for my $f (qw(ALBUM ARTIST GENRE COMMENT YEAR TITLE)) {
+# test 64
+for my $f (qw(ALBUM ARTIST GENRE COMMENT YEAR TITLE TRACKNUM)) {
     test_fields($tt1, $ttd1, $f);
     test_fields($tt2, $ttd2, $f);
 }
 
-# test 74
+# test 78
 for my $f (qw(FREQUENCY STEREO BITRATE LAYER MM SS VERSION)) {
     test_fields($ti1, $tti1, $f);
     test_fields($ti2, $tti2, $f);
 }
+
+# test 92
 
 unlink($tf3) or warn "Can't unlink '$tf3': $!";
 unlink($tf4) or warn "Can't unlink '$tf4': $!";

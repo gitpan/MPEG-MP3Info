@@ -3,7 +3,8 @@ use strict;
 use Carp;
 use vars qw(@ISA @EXPORT @EXPORT_OK %EXPORT_TAGS $VERSION
     @mp3_genres %mp3_genres @winamp_genres %winamp_genres $try_harder
-    @t_bitrate @t_sampling_freq @frequency_tbl %id3_tag_fields);
+    @t_bitrate @t_sampling_freq @frequency_tbl %id3_tag_fields
+    @id3_tag_names);
 @ISA = qw(Exporter);
 @EXPORT = qw(set_mp3tag get_mp3tag get_mp3info remove_mp3tag use_winamp_genres);
 @EXPORT_OK = qw(@mp3_genres %mp3_genres);
@@ -11,7 +12,7 @@ use vars qw(@ISA @EXPORT @EXPORT_OK %EXPORT_TAGS $VERSION
     genres  => [qw(@mp3_genres %mp3_genres)],
     all     => [@EXPORT, @EXPORT_OK]
 );
-$VERSION = '0.61';
+$VERSION = '0.63';
 
 {
     my $c = -1;
@@ -102,7 +103,7 @@ sub set_mp3tag {
 
 =pod
 
-=item set_mp3tag (FILE, TITLE, ARTIST, ALBUM, YEAR, COMMENT, GENRE)
+=item set_mp3tag (FILE, TITLE, ARTIST, ALBUM, YEAR, COMMENT, GENRE [, TRACKNUM])
 
 =item set_mp3tag (FILE, $HASHREF)
 
@@ -117,20 +118,24 @@ case-insensitive text string representing a genre found in C<@mp3_genres>.
 Will accept either a list of values, or a hashref of the type
 returned by C<get_mp3tag>.
 
+If TRACKNUM is present (for ID3v1.1), then the COMMENT field can only be
+28 bytes.
+
 =cut
 
     my($file, $title, $artist, $album, $year, $comment, $genre,
-        %info, $oldfh) = @_;
+        $tracknum, %info, $oldfh) = @_;
+    local(%id3_tag_fields) = %id3_tag_fields;
 
     # set each to '' if undef
-    for ($title, $artist, $album, $year, $comment, $genre,
-        (@info{qw(TITLE ARTIST ALBUM YEAR COMMENT GENRE)}))
+    for ($title, $artist, $album, $year, $comment, $tracknum, $genre,
+        (@info{@id3_tag_names}))
         {$_ = defined() ? $_ : ''}
 
     # populate data to hashref if hashref is not passed
     if (!ref($title)) {
-        (@info{qw(TITLE ARTIST ALBUM YEAR COMMENT GENRE)}) =
-            ($title, $artist, $album, $year, $comment, $genre);
+        (@info{@id3_tag_names}) =
+            ($title, $artist, $album, $year, $comment, $tracknum, $genre);
 
     # put data from hashref into hashref if hashref is passed
     } elsif (ref($title) eq 'HASH') {
@@ -139,11 +144,14 @@ returned by C<get_mp3tag>.
     # return otherwise
     } else {
         croak('Usage: ' .
-            'set_mp3tag (FILE, TITLE, ARTIST, ALBUM, YEAR, COMMENT, GENRE)' .
-            ", \nset_mp3tag (FILE, \$HASHREF)");
+            'set_mp3tag (FILE, TITLE, ARTIST, ALBUM, YEAR, COMMENT, GENRE' .
+            " [, TRACKNUM]), \nset_mp3tag (FILE, \$HASHREF)");
     }
 
     croak('No file specified') if !$file;
+
+    $id3_tag_fields{COMMENT} = 28 if $info{TRACKNUM};
+
 
     # only if -w is on
     if ($^W) {
@@ -156,9 +164,17 @@ returned by C<get_mp3tag>.
             }
         }
 
-        # check genre value
-        carp "Genre $info{GENRE} does not exist\n"
-            unless exists($mp3_genres{$info{GENRE}});
+        if ($info{GENRE}) {
+            carp "Genre $info{GENRE} does not exist\n"
+                unless exists($mp3_genres{$info{GENRE}});
+        }
+
+        if ($info{TRACKNUM}) {
+            carp "Tracknum $info{TRACKNUM} must be an integer " .
+                "from 1 and 255\n"
+                unless $info{TRACKNUM} =~ /^\d$/ &&
+                $info{TRACKNUM} > 0 && $info{TRACKNUM} < 256;
+        }
     }
 
     local(*FILE);
@@ -169,23 +185,16 @@ returned by C<get_mp3tag>.
     # go to end of file if no tag, beginning of file if tag
     seek(FILE, (<FILE> =~ /^TAG/ ? -128 : 0), 2);
 
-    # pad fields with \0
-    foreach my $field (keys %id3_tag_fields) {
-        while (length($info{$field}) < $id3_tag_fields{$field}) {
-            $info{$field} .= chr(0);
-        }
-    }
-
     # get genre value
-    $info{GENRE} = chr(
-        exists($mp3_genres{$info{GENRE}}) ?
-        $mp3_genres{$info{GENRE}} : 80  # some default genre
-    );
+    $info{GENRE} = exists($mp3_genres{$info{GENRE}}) ?
+        $mp3_genres{$info{GENRE}} : 255;  # some default genre
 
     # print TAG to file
-    printf("TAG%-30.30s%-30.30s%-30.30s%-4.4s%-30.30s%-1.1s",
-        @info{qw(TITLE ARTIST ALBUM YEAR COMMENT GENRE)}
-    );
+    if ($info{TRACKNUM}) {
+        print pack "a3a30a30a30a4a28xCC", 'TAG', @info{@id3_tag_names};
+    } else {
+        print pack "a3a30a30a30a4a30C", 'TAG', @info{@id3_tag_names[0..4, 6]};
+    }
 
     select($oldfh);
     close(FILE) or carp("Problem closing '$file': $!");
@@ -214,9 +223,18 @@ info as described in C<set_mp3tag>.
     while(defined(my $line = <FILE>)) {$tag .= $line}
 
     return if $tag !~ /^TAG/;
-    (undef, @info{qw/TITLE ARTIST ALBUM YEAR COMMENT GENRE/}) = 
-        (unpack('a3a30a30a30a4a30', $tag),
-        $mp3_genres[ord(substr($tag, -1))]);
+
+    if (substr($tag, -3, 2) =~ /\000[^\000]/) {
+        (undef, @info{@id3_tag_names}) = 
+            (unpack('a3a30a30a30a4a28', $tag),
+            ord(substr($tag, -2, 1)),
+            $mp3_genres[ord(substr($tag, -1))]);
+    } else {
+        (undef, @info{@id3_tag_names[0..4, 6]}) = 
+            (unpack('a3a30a30a30a4a30', $tag),
+            $mp3_genres[ord(substr($tag, -1))]);
+    }
+
 
     foreach my $key (keys %info) {
         if (defined($info{$key})) {
@@ -235,7 +253,9 @@ sub get_mp3info {
 =item get_mp3info (FILE)
 
 Returns hash reference containing file information for MP3 file.
-This data cannot be changed.
+This data cannot be changed.  Returned data includes MP3 version
+(VERSION), total time in minutes (MM) and seconds (SS), boolean
+for stereo (STEREO), MPEG layer (LAYER), BITRATE, and FREQUENCY.
 
 =cut
 
@@ -254,7 +274,7 @@ This data cannot be changed.
 
     if ($off == 0) {
         if (my $id3v2 = _get_v2head(\*FILE)) {
-            $off += $id3v2->{tag_size};
+            $off += 10 + $id3v2->{tag_size};
             &$myseek;
         }
     }
@@ -343,7 +363,7 @@ sub _get_v2head {
     # get ID3v2 tag length from bytes 7-10
     seek(FILE, 6, 0);
     read(FILE, $bytes, 4);
-    @bytes = reverse split / */, $bytes;
+    @bytes = reverse split m//, $bytes;
     foreach my $i (0..3) {
         # whoaaaaaa nellllllyyyyyy!
         $h->{tag_size} += ord($bytes[$i]) * 128 ** $i;
@@ -503,9 +523,11 @@ BEGIN {
     @frequency_tbl = map {eval"${_}e-3"}
         @{$t_sampling_freq[0]}, @{$t_sampling_freq[1]};
 
-
     %id3_tag_fields =
         (TITLE=>30, ARTIST=>30, ALBUM=>30, COMMENT=>30, YEAR=>4);
+
+    @id3_tag_names = qw(TITLE ARTIST ALBUM YEAR COMMENT TRACKNUM GENRE);
+
 }
 
 
@@ -521,7 +543,13 @@ __END__
 
 Added recognition of ID3v2 headers, speeding up C<get_mp3info> for
 those files that have ID3v2 tags.  Want to add functionality to get
-and set data in those tags.
+and set data in those tags.  Too busy to do it.  If someone wants
+to patch the module, feel free to submit patches.
+
+=item Variable Bitrate MP3s
+
+Get correct length in MM:SS ... anything other problems relating to
+this?  Need algorithm for it.
 
 =back
 
@@ -529,6 +557,29 @@ and set data in those tags.
 =head1 HISTORY
 
 =over 4
+
+=item v0.63, Friday, April 30, 1999
+
+Added ID3v1.1 support.  Thanks Trond Michelsen
+E<lt>mike@crusaders.noE<gt>, Pass F. B. Travis
+E<lt>pftravis@bellsouth.netE<gt>.
+
+Added 255 (\xFF) as default genre.  Thanks Andrew Phillips
+E<lt>asp@wasteland.orgE<gt>.
+
+I think I fixed bug relating to spaces in ID3v2 headers.  Thanks
+Tom Brown.
+
+
+=item v0.62, Sunday, March 7, 1999
+
+Doc updates.
+
+Fix small unnoticable bug where ID3v2 offset is tag size plus 10,
+not just tag size.
+
+Not publickly released.
+
 
 =item v0.61, Monday, March 1, 1999
 
@@ -540,21 +591,29 @@ Made tests more extensive (more for my own sanity when making all
 these changes than to make sure it works on other platforms and
 machines :).
 
+
 =item v0.60, Sunday, February 28, 1999
 
 Cleaned up a lot of stuff, added more comments, made C<get_mp3info>
 much faster and much more reliable, and added recognition of ID3v2
 headers.  Thanks to Tom Brown E<lt>thecap@usa.netE<gt> for his help.
 
+See for more info on ID3v2:
+
+    http://www.id3.org/
+
+
 =item v0.52, Sunday, February 21, 1999
 
 Fixed problem in C<get_mp3tag> that changed value of C<$_> in caller
 (Todd Hanneken E<lt>thanneken@hds.harvard.eduE<gt>).
 
+
 =item v0.51, Saturday, February 20, 1999
 
 Fixed problem with C<%winamp_genres> having the wrong numbers
 (Matthew Sachs).
+
 
 =item v0.50, Friday, February 19, 1999
 
@@ -575,6 +634,7 @@ Thanks to Matthew Sachs for his input and fixes.
 
 Thanks also to Peter Kovacs E<lt>kovacsp@egr.uri.eduE<gt>.
 
+
 =item v0.20, Saturday, October 17, 1998
 
 Changed name from C<MPEG::MP3Tag> to C<MPEG::MP3Info>, because it does
@@ -582,6 +642,7 @@ more than just TAG stuff now.
 
 Made header stuff even more reliable.  Lots of help and testing from
 Meng Weng Wong again.  :-)
+
 
 =item v0.13, Thursday, October 8, 1998
 
@@ -614,10 +675,12 @@ I did everything I could to find the header info, but if
 anyone has valid MP3 files that are not recognized, or has suggestions
 for improvement of the algorithms, let me know.
 
+
 =item v0.04, Tuesday, September 29, 1998
 
 Changed a few things, replaced a regex with an C<unpack> 
 (Meng Weng Wong E<lt>mengwong@pobox.comE<gt>).
+
 
 =item v0.03, Tuesday, September 8, 1998
 
@@ -627,12 +690,11 @@ First public release.
 
 =head1 AUTHOR AND COPYRIGHT
 
-Chris Nandor E<lt>pudge@pobox.comE<gt>
-http://pudge.net/
+Chris Nandor E<lt>pudge@pobox.comE<gt>, http://pudge.net/
 
-Copyright (c) 1999 Chris Nandor.  All rights reserved.  This program is free 
-software; you can redistribute it and/or modify it under the same terms as 
-Perl itself.  Please see the Perl Artistic License.
+Copyright (c) 1999 Chris Nandor.  All rights reserved.  This program is
+free software; you can redistribute it and/or modify it under the terms
+of the Artistic License, distributed with Perl.
 
 Thanks to Johann Lindvall for his mp3tool program:
 
@@ -642,6 +704,6 @@ Helped me figure it all out.
 
 =head1 VERSION
 
-v0.61, Monday, March 1, 1999
+v0.63, Friday, April 30, 1999
 
 =cut

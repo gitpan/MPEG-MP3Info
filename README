@@ -1,4 +1,4 @@
-Monday, March 1, 1999
+Friday, April 30, 1999
 
 ***WARNING***
 
@@ -27,13 +27,15 @@ This archive can always be obtained from:
     http://www.perl.com/CPAN/modules/by-module/MPEG/
 
 Mac users: The file is a tarred, gzipped file.  Use Stuffit Expander 
-or a similar program (like my cpan-mac stiuff) to get at the archive.
+or a similar program (like my cpan-mac stuff, also in the CNANDOR
+directory) to get at the archive.
 
 Please let me know how well it does(n't) work, and any changes you'd 
 like to see.
 
 Check out the script from Meng Weng Wong in eg/, it's pretty cool, and
-if you have the unreleased CDDB module, it will be even cooler.
+if you have the CDDB module, it will be even cooler.  There's
+also a MacPerl script for editing tags (mp3tag) in there.
 
 #============================================================================
 
@@ -69,7 +71,7 @@ DESCRIPTION
     the text `TAG'. File will be 128 bytes shorter. Returns undef if no
     existing TAG found, 1 on successful removal of TAG.
 
-    set_mp3tag (FILE, TITLE, ARTIST, ALBUM, YEAR, COMMENT, GENRE)
+    set_mp3tag (FILE, TITLE, ARTIST, ALBUM, YEAR, COMMENT, GENRE [, TRACKNUM])
     set_mp3tag (FILE, $HASHREF)
     Adds/changes tag information in an MP3 audio file. Will clobber any
     existing information in file.
@@ -83,21 +85,49 @@ DESCRIPTION
     Will accept either a list of values, or a hashref of the type returned
     by `get_mp3tag'.
 
+    If TRACKNUM is present (for ID3v1.1), then the COMMENT field can only
+    be 28 bytes.
+
     get_mp3tag (FILE)
     Returns hash reference containing tag information in MP3 file. Same
     info as described in `set_mp3tag'.
 
     get_mp3info (FILE)
     Returns hash reference containing file information for MP3 file. This
-    data cannot be changed.
+    data cannot be changed. Returned data includes MP3 version (VERSION),
+    total time in minutes (MM) and seconds (SS), boolean for stereo
+    (STEREO), MPEG layer (LAYER), BITRATE, and FREQUENCY.
 
 TODO
     ID3v2 Support
         Added recognition of ID3v2 headers, speeding up `get_mp3info' for
         those files that have ID3v2 tags. Want to add functionality to get
-        and set data in those tags.
+        and set data in those tags. Too busy to do it. If someone wants to
+        patch the module, feel free to submit patches.
+
+    Variable Bitrate MP3s
+        Get correct length in MM:SS ... anything other problems relating
+        to this? Need algorithm for it.
 
 HISTORY
+    v0.63, Friday, April 30, 1999
+        Added ID3v1.1 support. Thanks Trond Michelsen <mike@crusaders.no>,
+        Pass F. B. Travis <pftravis@bellsouth.net>.
+
+        Added 255 (\xFF) as default genre. Thanks Andrew Phillips
+        <asp@wasteland.org>.
+
+        I think I fixed bug relating to spaces in ID3v2 headers. Thanks
+        Tom Brown.
+
+    v0.62, Sunday, March 7, 1999
+        Doc updates.
+
+        Fix small unnoticable bug where ID3v2 offset is tag size plus 10,
+        not just tag size.
+
+        Not publickly released.
+
     v0.61, Monday, March 1, 1999
         Fixed problem of not removing nulls on return from `get_mp3tag'
         (was using spaces for padding before ... now trailing whitespace
@@ -111,6 +141,10 @@ HISTORY
         Cleaned up a lot of stuff, added more comments, made `get_mp3info'
         much faster and much more reliable, and added recognition of ID3v2
         headers. Thanks to Tom Brown <thecap@usa.net> for his help.
+
+        See for more info on ID3v2:
+
+            http://www.id3.org/
 
     v0.52, Sunday, February 21, 1999
         Fixed problem in `get_mp3tag' that changed value of `$_' in caller
@@ -186,11 +220,11 @@ HISTORY
         First public release.
 
 AUTHOR AND COPYRIGHT
-    Chris Nandor <pudge@pobox.com> http://pudge.net/
+    Chris Nandor <pudge@pobox.com>, http://pudge.net/
 
     Copyright (c) 1999 Chris Nandor. All rights reserved. This program is
-    free software; you can redistribute it and/or modify it under the same
-    terms as Perl itself. Please see the Perl Artistic License.
+    free software; you can redistribute it and/or modify it under the
+    terms of the Artistic License, distributed with Perl.
 
     Thanks to Johann Lindvall for his mp3tool program:
 
@@ -199,6 +233,6 @@ AUTHOR AND COPYRIGHT
     Helped me figure it all out.
 
 VERSION
-    v0.61, Monday, March 1, 1999
+    v0.63, Friday, April 30, 1999
 
 #============================================================================
