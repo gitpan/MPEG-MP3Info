@@ -4,4 +4,5 @@ use ExtUtils::MakeMaker;
 WriteMakefile(
     'NAME'	=> 'MPEG::MP3Info',
     'VERSION_FROM' => 'MP3Info.pm', # finds $VERSION
+    'PREREQ_PM' => { 'MP3::Info' => '0.80' },
 );
