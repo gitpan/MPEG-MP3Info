@@ -1,21 +1,28 @@
 package MPEG::MP3Info;
 use strict;
 use Carp;
-use vars qw(@ISA @EXPORT $VERSION @mp3_genres %mp3_genres);
+use vars qw(@ISA @EXPORT @EXPORT_OK %EXPORT_TAGS $VERSION
+    @mp3_genres %mp3_genres @winamp_genres %winamp_genres $try_harder);
 @ISA = qw(Exporter);
-@EXPORT = qw(set_mp3tag get_mp3tag get_mp3info);
-$VERSION = '0.20';
+@EXPORT = qw(set_mp3tag get_mp3tag get_mp3info remove_mp3tag use_winamp_genres);
+@EXPORT_OK = qw(@mp3_genres %mp3_genres);
+%EXPORT_TAGS = (
+    genres  => [qw(@mp3_genres %mp3_genres)],
+    all     => [@EXPORT, @EXPORT_OK]
+);
+$VERSION = '0.50';
 
 {
   my $c = -1;
   %mp3_genres = map {($_, ++$c, lc($_), $c)} @mp3_genres;
+  %winamp_genres = map {($_, ++$c, lc($_), $c)} @winamp_genres;
 }
 
 =pod
 
 =head1 NAME
 
-MPEG::MP3Info - Manipulate / fetch v1 TAG and header info from a MP3 audio file
+MPEG::MP3Info - Manipulate / fetch info from MP3 audio files
 
 =head1 SYNOPSIS
 
@@ -35,6 +42,55 @@ MPEG::MP3Info - Manipulate / fetch v1 TAG and header info from a MP3 audio file
 =head1 DESCRIPTION
 
 =cut
+
+sub use_winamp_genres {
+
+=pod
+
+=item use_winamp_genres()
+
+Puts WinAmp genres into C<@mp3_genres> and C<%mp3_genres>.
+
+Import the data structures with one of:
+
+    use MPEG::MP3Info qw(:genres);
+    use MPEG::MP3Info qw(:DEFAULT :genres);
+    use MPEG::MP3Info qw(:all);
+
+=cut
+
+    %mp3_genres = %winamp_genres;
+    @mp3_genres = @winamp_genres;
+    1;
+}
+
+sub remove_mp3tag {
+
+=pod
+
+=item remove_mp3tag (FILE)
+
+Removes last 128 bytes from file if those last 128 bytes begin with the
+text `TAG'.  File will be 128 bytes shorter.  Returns undef if no existing
+TAG found, 1 on successful removal of TAG.
+
+=cut
+
+    my($file) = @_;
+
+    $file ||= croak('No file specified');
+
+    local(*FILE);
+    open(FILE, "+<$file") or croak($!);
+    binmode(FILE);
+    seek(FILE, -128, 2);
+    my $tell = tell(FILE);
+    return unless <FILE> =~ /^TAG/;
+    truncate(FILE, $tell) or carp "Can't truncate '$file': $!";
+    close(FILE);
+    1;
+}
+
 
 sub set_mp3tag {
 
@@ -78,7 +134,7 @@ returned by C<get_mp3tag>.
         carp('Data too long for field; truncated');
     }
 
-    warn "Genre $genre does not exist\n"
+    carp "Genre $genre does not exist\n"
         if $^W && $genre && !exists($mp3_genres{$genre});
 
     local(*FILE);
@@ -228,12 +284,12 @@ Returns hash reference containing file information for MP3 file.
         if (!$once) {
             return get_mp3info($file, 36, 0) if !$o;
             return get_mp3info($file, $o+128, (caller(33) ? 1 : 0));
-        } else {
+        } elsif ($try_harder) {
             return if caller(1024);
             return get_mp3info($file, $o+1, 2);
         }
     }
-#    printf("%10s %10s %s ", $o, $byte, $file) if $DEBUG;
+#    printf("%10s %10s %s ", $o, $byte, $file);
 
     $h->{mode_extension} = 0 if !$h->{mode};
     if ($h->{ID}) {$h->{size} = $h->{mode} == 3 ? 21 : 36}
@@ -252,9 +308,10 @@ Returns hash reference containing file information for MP3 file.
         ((115200/2)*(1+$h->{ID})) / $h->{fs};
     $h->{secs} = $h->{'length'} / 100;
 
+    $i->{VERSION} = $h->{ID};
     $i->{MM} = int $h->{secs}/60;
     $i->{SS} = int $h->{secs}%60;  # ? ceil() ?  leftover seconds?
-    $i->{STEREO} = $h->{ID};
+    $i->{STEREO} = $h->{mode} == 3 ? 0 : 1;
     $i->{LAYER} = $h->{layer} >= 0 ? ($h->{layer} == 3 ? 2 : 3) : '';
     $i->{BITRATE} = $h->{bitrate} >= 0 ? $h->{bitrate} : '';
     $i->{FREQUENCY} = $h->{freq_idx} >= 0 ?
@@ -348,6 +405,56 @@ BEGIN {
     'Rock & Roll',
     'Hard Rock',
   );
+
+  @winamp_genres = (
+    @mp3_genres,
+    'Folk',
+    'Folk-Rock',
+    'National Folk',
+    'Swing',
+    'Fast Fusion',
+    'Bebob',
+    'Latin',
+    'Revival',
+    'Celtic',
+    'Bluegrass',
+    'Avantgarde',
+    'Gothic Rock',
+    'Progressive Rock',
+    'Psychedelic Rock',
+    'Symphonic Rock',
+    'Slow Rock',
+    'Big Band',
+    'Chorus',
+    'Easy Listening',
+    'Acoustic',
+    'Humour',
+    'Speech',
+    'Chanson',
+    'Opera',
+    'Chamber Music',
+    'Sonata',
+    'Symphony',
+    'Booty Bass',
+    'Primus',
+    'Porn Groove',
+    'Satire',
+    'Slow Jam',
+    'Club',
+    'Tango',
+    'Samba',
+    'Folklore',
+    'Ballad',
+    'Power Ballad',
+    'Rhythmic Soul',
+    'Freestyle',
+    'Duet',
+    'Punk Rock',
+    'Drum Solo',
+    'Acapella',
+    'Euro-House',
+    'Dance Hall',
+  );
 }
 
 
@@ -358,6 +465,24 @@ __END__
 =head1 HISTORY
 
 =over 4
+
+=item v0.50, Thursday, February 18, 1998
+
+Added C<remove_mp3tag>.  Addeed VERSION to the hash returned by 
+C<get_mp3info>, and fixed a bug where STEREO was not being set correctly.
+
+Export all genre data structures on request.  Added C<use_winamp_genres>
+to use WinAmp genres.
+
+Added a C<$MPEG::MP3Info::try_harder> variable that will try harder
+to find the MP3 header in a file.  False by default.  Can take a long
+time to fail, but should find most headers at any offets if set to true.
+
+Thanks to Matthew Sachs for his input and fixes.
+
+    E<lt>matthewg@interport.netE<gt>
+    http://www.zevils.com/linux/mp3tools/
+
 
 =item v0.20, Saturday, October 17, 1998
 
@@ -426,6 +551,6 @@ Helped me figure it all out.
 
 =head1 VERSION
 
-v0.20, Saturday, October 17, 1998
+v0.50, Friday, February 19, 1999
 
 =cut

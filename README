@@ -1,15 +1,12 @@
------BEGIN PGP SIGNED MESSAGE-----
-
-Saturday, October 17, 1998
+Friday, February 19, 1999
 
 This archive can always be obtained from:
 
-    http://pudge.net/macperl/
-    http://perl.com/CPAN/authors/id/CNANDOR/
-    http://perl.com/CPAN/modules/by-module/MPEG/
+    http://www.perl.com/CPAN/authors/id/CNANDOR/
+    http://www.perl.com/CPAN/modules/by-module/MPEG/
 
 Mac users: The file is a tarred, gzipped file.  Use Stuffit Expander 
-or a similar program to get at the archive.
+or a similar program (like my cpan-mac stiuff) to get at the archive.
 
 Please let me know how well it does(n't) work, and any changes you'd 
 like to see.
@@ -20,8 +17,7 @@ if you have the unreleased CDDB module, it will be even cooler.
 #============================================================================
 
 NAME
-    MPEG::MP3Info - Manipulate / fetch v1 TAG and header info from a MP3
-    audio file
+    MPEG::MP3Info - Manipulate / fetch info from MP3 audio files
 
 SYNOPSIS
         #!perl -w
@@ -38,6 +34,20 @@ SYNOPSIS
         printf "$file length is %d:%d", $info->{MM}, $info->{SS};
 
 DESCRIPTION
+    use_winamp_genres()
+    Puts WinAmp genres into `@mp3_genres' and `%mp3_genres'.
+
+    Import the data structures with one of:
+
+        use MPEG::MP3Info qw(:genres);
+        use MPEG::MP3Info qw(:DEFAULT :genres);
+        use MPEG::MP3Info qw(:all);
+
+    remove_mp3tag (FILE)
+    Removes last 128 bytes from file if those last 128 bytes begin with
+    the text `TAG'. File will be 128 bytes shorter. Returns undef if no
+    existing TAG found, 1 on successful removal of TAG.
+
     set_mp3tag (FILE, TITLE, ARTIST, ALBUM, YEAR, COMMENT, GENRE)
     set_mp3tag (FILE, $HASHREF)
     Adds/changes tag information in an MP3 audio file. Will clobber any
@@ -58,6 +68,24 @@ DESCRIPTION
     Returns hash reference containing file information for MP3 file.
 
 HISTORY
+    v0.50, Thursday, February 18, 1998
+        Added `remove_mp3tag'. Addeed VERSION to the hash returned by
+        `get_mp3info', and fixed a bug where STEREO was not being set
+        correctly.
+
+        Export all genre data structures on request. Added
+        `use_winamp_genres' to use WinAmp genres.
+
+        Added a `$MPEG::MP3Info::try_harder' variable that will try harder
+        to find the MP3 header in a file. False by default. Can take a
+        long time to fail, but should find most headers at any offets if
+        set to true.
+
+        Thanks to Matthew Sachs for his input and fixes.
+
+            E<lt>matthewg@interport.netE<gt>
+            http://www.zevils.com/linux/mp3tools/
+
     v0.20, Saturday, October 17, 1998
         Changed name from `MPEG::MP3Tag' to `MPEG::MP3Info', because it
         does more than just TAG stuff now.
@@ -116,22 +144,6 @@ AUTHOR AND COPYRIGHT
     Helped me figure it all out.
 
 VERSION
-    v0.20, Saturday, October 17, 1998
-
+    v0.50, Friday, February 19, 1999
 
 #============================================================================
-
------BEGIN PGP SIGNATURE-----
-Version: PGPfreeware 5.0 for non-commercial use <http://www.pgp.com>
-Charset: noconv
-
-iQCVAwUBNii5dShcZja3bnKtAQGvowQAtdTz/TbhklhLq+/raZL2/RhujIl8EbiA
-oGhk5zMKYCrSNosBfBWvjze8SfJ4nhNolSqfRiIqV8ywaOdk5qYbXtT82/GkVaFA
-mxJftOZA3ulJ/h8vodt9wN0Ci1pfv/uFEuRwUO/lXd3PnA/kz2lWzM7/xv6rlOAA
-3QdeQu4t7KQ=
-=m0Tk
------END PGP SIGNATURE-----
-
--- 
-Chris Nandor          mailto:pudge@pobox.com         http://pudge.net/
-%PGPKey = ('B76E72AD', [1024, '0824090B CE73CA10  1FF77F13 8180B6B6'])
