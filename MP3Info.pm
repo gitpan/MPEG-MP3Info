@@ -10,12 +10,13 @@ use vars qw(@ISA @EXPORT @EXPORT_OK %EXPORT_TAGS $VERSION
     genres  => [qw(@mp3_genres %mp3_genres)],
     all     => [@EXPORT, @EXPORT_OK]
 );
-$VERSION = '0.50';
+$VERSION = '0.51';
 
 {
-  my $c = -1;
-  %mp3_genres = map {($_, ++$c, lc($_), $c)} @mp3_genres;
-  %winamp_genres = map {($_, ++$c, lc($_), $c)} @winamp_genres;
+    my $c = -1;
+    %mp3_genres = map {($_, ++$c, lc($_), $c)} @mp3_genres;
+    $c = -1;
+    %winamp_genres = map {($_, ++$c, lc($_), $c)} @winamp_genres;
 }
 
 =pod
@@ -466,7 +467,12 @@ __END__
 
 =over 4
 
-=item v0.50, Thursday, February 18, 1998
+=item v0.51, Saturday, February 20, 1999
+
+Fixed problem with C<%winamp_genres> having the wrong numbers
+(Matthew Sachs).
+
+=item v0.50, Friday, February 19, 1999
 
 Added C<remove_mp3tag>.  Addeed VERSION to the hash returned by 
 C<get_mp3info>, and fixed a bug where STEREO was not being set correctly.
@@ -480,7 +486,7 @@ time to fail, but should find most headers at any offets if set to true.
 
 Thanks to Matthew Sachs for his input and fixes.
 
-    E<lt>matthewg@interport.netE<gt>
+    mailto:matthewg@interport.net
     http://www.zevils.com/linux/mp3tools/
 
 
@@ -497,7 +503,7 @@ Meng Weng Wong again.  :-)
 Had some problems with header verification, got some code from
 Predrag Supurovic:
 
-    E<lt>mpgtools@dv.co.yuE<gt>
+    mailto:mpgtools@dv.co.yu
     http://www.dv.co.yu/mp3list/mpgtools.htm
     http://www.dv.co.yu/mp3list/mpeghdr.htm
 
@@ -536,10 +542,10 @@ First public release.
 
 =head1 AUTHOR AND COPYRIGHT
 
-Chris Nandor F<E<lt>pudge@pobox.comE<gt>>
+Chris Nandor E<lt>pudge@pobox.comE<gt>
 http://pudge.net/
 
-Copyright (c) 1998 Chris Nandor.  All rights reserved.  This program is free 
+Copyright (c) 1999 Chris Nandor.  All rights reserved.  This program is free 
 software; you can redistribute it and/or modify it under the same terms as 
 Perl itself.  Please see the Perl Artistic License.
 
@@ -551,6 +557,6 @@ Helped me figure it all out.
 
 =head1 VERSION
 
-v0.50, Friday, February 19, 1999
+v0.51, Saturday, February 20, 1999
 
 =cut

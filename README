@@ -1,4 +1,4 @@
-Friday, February 19, 1999
+Saturday, February 20, 1999
 
 This archive can always be obtained from:
 
@@ -68,7 +68,11 @@ DESCRIPTION
     Returns hash reference containing file information for MP3 file.
 
 HISTORY
-    v0.50, Thursday, February 18, 1998
+    v0.51, Saturday, February 20, 1999
+        Fixed problem with `%winamp_genres' having the wrong numbers
+        (Matthew Sachs).
+
+    v0.50, Friday, February 19, 1999
         Added `remove_mp3tag'. Addeed VERSION to the hash returned by
         `get_mp3info', and fixed a bug where STEREO was not being set
         correctly.
@@ -83,7 +87,7 @@ HISTORY
 
         Thanks to Matthew Sachs for his input and fixes.
 
-            E<lt>matthewg@interport.netE<gt>
+            mailto:matthewg@interport.net
             http://www.zevils.com/linux/mp3tools/
 
     v0.20, Saturday, October 17, 1998
@@ -97,7 +101,7 @@ HISTORY
         Had some problems with header verification, got some code from
         Predrag Supurovic:
 
-            E<lt>mpgtools@dv.co.yuE<gt>
+            mailto:mpgtools@dv.co.yu
             http://www.dv.co.yu/mp3list/mpgtools.htm
             http://www.dv.co.yu/mp3list/mpeghdr.htm
 
@@ -133,7 +137,7 @@ HISTORY
 AUTHOR AND COPYRIGHT
     Chris Nandor <pudge@pobox.com> http://pudge.net/
 
-    Copyright (c) 1998 Chris Nandor. All rights reserved. This program is
+    Copyright (c) 1999 Chris Nandor. All rights reserved. This program is
     free software; you can redistribute it and/or modify it under the same
     terms as Perl itself. Please see the Perl Artistic License.
 
@@ -144,6 +148,6 @@ AUTHOR AND COPYRIGHT
     Helped me figure it all out.
 
 VERSION
-    v0.50, Friday, February 19, 1999
+    v0.51, Saturday, February 20, 1999
 
 #============================================================================
