@@ -1,4 +1,4 @@
-Saturday, February 20, 1999
+Sunday, February 21, 1999
 
 This archive can always be obtained from:
 
@@ -68,6 +68,10 @@ DESCRIPTION
     Returns hash reference containing file information for MP3 file.
 
 HISTORY
+    v0.52, Sunday, February 21, 1999
+        Fixed problem in `get_mp3tag' that changed value of `$_' in caller
+        (Todd Hanneken <thanneken@hds.harvard.edu>).
+
     v0.51, Saturday, February 20, 1999
         Fixed problem with `%winamp_genres' having the wrong numbers
         (Matthew Sachs).
@@ -78,7 +82,8 @@ HISTORY
         correctly.
 
         Export all genre data structures on request. Added
-        `use_winamp_genres' to use WinAmp genres.
+        `use_winamp_genres' to use WinAmp genres (Roland Steinbach
+        <roland@support-system.com>).
 
         Added a `$MPEG::MP3Info::try_harder' variable that will try harder
         to find the MP3 header in a file. False by default. Can take a
@@ -89,6 +94,8 @@ HISTORY
 
             mailto:matthewg@interport.net
             http://www.zevils.com/linux/mp3tools/
+
+        Thanks also to Peter Kovacs <kovacsp@egr.uri.edu>.
 
     v0.20, Saturday, October 17, 1998
         Changed name from `MPEG::MP3Tag' to `MPEG::MP3Info', because it
@@ -148,6 +155,6 @@ AUTHOR AND COPYRIGHT
     Helped me figure it all out.
 
 VERSION
-    v0.51, Saturday, February 20, 1999
+    v0.52, Sunday, February 21, 1999
 
 #============================================================================

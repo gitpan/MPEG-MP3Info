@@ -188,7 +188,8 @@ info as described in C<set_mp3tag>.  You can't change this data.
     open(FILE, "<$file") or croak($!);
     binmode(FILE);
     seek(FILE, -128, 2);
-    while(<FILE>) {$tag .= $_}
+    local $_;
+    while(defined(my $line = <FILE>)) {$tag .= $line}
 
     return if $tag !~ /^TAG/;
     (undef, @info{qw/TITLE ARTIST ALBUM YEAR COMMENT GENRE/}) = 
@@ -467,6 +468,11 @@ __END__
 
 =over 4
 
+=item v0.52, Sunday, February 21, 1999
+
+Fixed problem in C<get_mp3tag> that changed value of C<$_> in caller
+(Todd Hanneken E<lt>thanneken@hds.harvard.eduE<gt>).
+
 =item v0.51, Saturday, February 20, 1999
 
 Fixed problem with C<%winamp_genres> having the wrong numbers
@@ -478,7 +484,7 @@ Added C<remove_mp3tag>.  Addeed VERSION to the hash returned by
 C<get_mp3info>, and fixed a bug where STEREO was not being set correctly.
 
 Export all genre data structures on request.  Added C<use_winamp_genres>
-to use WinAmp genres.
+to use WinAmp genres (Roland Steinbach E<lt>roland@support-system.comE<gt>).
 
 Added a C<$MPEG::MP3Info::try_harder> variable that will try harder
 to find the MP3 header in a file.  False by default.  Can take a long
@@ -489,6 +495,7 @@ Thanks to Matthew Sachs for his input and fixes.
     mailto:matthewg@interport.net
     http://www.zevils.com/linux/mp3tools/
 
+Thanks also to Peter Kovacs E<lt>kovacsp@egr.uri.eduE<gt>.
 
 =item v0.20, Saturday, October 17, 1998
 
@@ -557,6 +564,6 @@ Helped me figure it all out.
 
 =head1 VERSION
 
-v0.51, Saturday, February 20, 1999
+v0.52, Sunday, February 21, 1999
 
 =cut
