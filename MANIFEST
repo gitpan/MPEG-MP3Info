@@ -1,0 +1,8 @@
+Makefile.PL
+MANIFEST
+MP3Info.pm
+README
+eg/mp3tocddb.PL
+test.pl
+test1.mp3
+test2.mp3

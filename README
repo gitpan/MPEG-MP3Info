@@ -1,0 +1,137 @@
+-----BEGIN PGP SIGNED MESSAGE-----
+
+Saturday, October 17, 1998
+
+This archive can always be obtained from:
+
+    http://pudge.net/macperl/
+    http://perl.com/CPAN/authors/id/CNANDOR/
+    http://perl.com/CPAN/modules/by-module/MPEG/
+
+Mac users: The file is a tarred, gzipped file.  Use Stuffit Expander 
+or a similar program to get at the archive.
+
+Please let me know how well it does(n't) work, and any changes you'd 
+like to see.
+
+Check out the script from Meng Weng Wong in eg/, it's pretty cool, and
+if you have the unreleased CDDB module, it will be even cooler.
+
+#============================================================================
+
+NAME
+    MPEG::MP3Info - Manipulate / fetch v1 TAG and header info from a MP3
+    audio file
+
+SYNOPSIS
+        #!perl -w
+        use MPEG::MP3Info;
+        my $file = 'Pearls_Before_Swine.mp3';
+        set_mp3tag($file, 'Pearls Before Swine', q"77's",
+          'Sticks and Stones', '1990', q"(c) 1990 77's LTD.", 'rock & roll');
+
+        my $tag = get_mp3tag($file) or die "No TAG info";
+        $tag->{GENRE} = 'rock';
+        set_mp3tag($file, $tag);
+
+        my $info = get_mp3info($file);
+        printf "$file length is %d:%d", $info->{MM}, $info->{SS};
+
+DESCRIPTION
+    set_mp3tag (FILE, TITLE, ARTIST, ALBUM, YEAR, COMMENT, GENRE)
+    set_mp3tag (FILE, $HASHREF)
+    Adds/changes tag information in an MP3 audio file. Will clobber any
+    existing information in file. All fields have a 30-byte limit, except
+    for YEAR, which has a four-byte limit.
+
+    GENRE is a case-insensitive text string representing a genre found in
+    `@mp3_genres'.
+
+    Will accept either a list of values, or a hashref of the type returned
+    by `get_mp3tag'.
+
+    get_mp3tag (FILE)
+    Returns hash reference containing tag information in MP3 file. Same
+    info as described in `set_mp3tag'. You can't change this data.
+
+    get_mp3info (FILE)
+    Returns hash reference containing file information for MP3 file.
+
+HISTORY
+    v0.20, Saturday, October 17, 1998
+        Changed name from `MPEG::MP3Tag' to `MPEG::MP3Info', because it
+        does more than just TAG stuff now.
+
+        Made header stuff even more reliable. Lots of help and testing
+        from Meng Weng Wong again. :-)
+
+    v0.13, Thursday, October 8, 1998
+        Had some problems with header verification, got some code from
+        Predrag Supurovic:
+
+            E<lt>mpgtools@dv.co.yuE<gt>
+            http://www.dv.co.yu/mp3list/mpgtools.htm
+            http://www.dv.co.yu/mp3list/mpeghdr.htm
+
+        Great stuff. Also did some looping to find a header if it is not
+        in the "right" place. I did what I think it is a smart way to do
+        it, since some files have the header as far down as 2 kbytes into
+        the file. First, I look at position 0, then at position 36 (a
+        position where I have found many headers), then I start at 0 again
+        and jump in 128-byte chunks. Once I do that a bunch of times, I go
+        back at the beginning and try at 0 and go ahead in 1-byte chunks
+        for a bunch more times.
+
+        If you have an MP3 that has the header begin at an odd place like
+        byte 761, then I suggest you strip out the junk before the header
+        begins. :-)
+
+    v0.12, Friday, October 2, 1998
+        Added `get_mp3info'. Thanks again to mp3tool source from Johann
+        Lindvall, because I basically stole it straight (after converting
+        it from C to Perl, of course).
+
+        I did everything I could to find the header info, but if anyone
+        has valid MP3 files that are not recognized, or has suggestions
+        for improvement of the algorithms, let me know.
+
+    v0.04, Tuesday, September 29, 1998
+        Changed a few things, replaced a regex with an `unpack' (Meng Weng
+        Wong <mengwong@pobox.com>).
+
+    v0.03, Tuesday, September 8, 1998
+        First public release.
+
+AUTHOR AND COPYRIGHT
+    Chris Nandor <pudge@pobox.com> http://pudge.net/
+
+    Copyright (c) 1998 Chris Nandor. All rights reserved. This program is
+    free software; you can redistribute it and/or modify it under the same
+    terms as Perl itself. Please see the Perl Artistic License.
+
+    Thanks to Johann Lindvall for his mp3tool program:
+
+        http://www.dtek.chalmers.se/~d2linjo/mp3/mp3tool.html
+
+    Helped me figure it all out.
+
+VERSION
+    v0.20, Saturday, October 17, 1998
+
+
+#============================================================================
+
+-----BEGIN PGP SIGNATURE-----
+Version: PGPfreeware 5.0 for non-commercial use <http://www.pgp.com>
+Charset: noconv
+
+iQCVAwUBNii5dShcZja3bnKtAQGvowQAtdTz/TbhklhLq+/raZL2/RhujIl8EbiA
+oGhk5zMKYCrSNosBfBWvjze8SfJ4nhNolSqfRiIqV8ywaOdk5qYbXtT82/GkVaFA
+mxJftOZA3ulJ/h8vodt9wN0Ci1pfv/uFEuRwUO/lXd3PnA/kz2lWzM7/xv6rlOAA
+3QdeQu4t7KQ=
+=m0Tk
+-----END PGP SIGNATURE-----
+
+-- 
+Chris Nandor          mailto:pudge@pobox.com         http://pudge.net/
+%PGPKey = ('B76E72AD', [1024, '0824090B CE73CA10  1FF77F13 8180B6B6'])
